@@ -1,6 +1,6 @@
 # RoboREPL
 
-A Python [REPL](https://en.wikipedia.org/wiki/Read–eval–print_loop) in RoboFont.
+A Python [REPL](https://en.wikipedia.org/wiki/Read–eval–print_loop) in RoboFont and Glyphs.app
 
 ![Screen Shot](screenshot.png "Screen Shot")
 
