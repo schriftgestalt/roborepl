@@ -1,6 +1,6 @@
 documentation = u"""
 ============
-RoboREPL 0.4
+RoboREPL 0.5
 ============
 
 An interactive Python interpreter for RoboFont.
@@ -336,7 +336,7 @@ for k, v in defaultSettings.items():
 
 if inRoboFont:
     mojo.extensions.registerExtensionDefaults(d)
-    
+
     def getDefaultValue(key):
         return mojo.extensions.getExtensionDefault(defaultStub + key)
 
@@ -350,6 +350,12 @@ elif inGlyphs:
 
     def setDefaultValue(key, value):
         NSUserDefaults.standardUserDefaults().setObject_forKey_(value, defaultStub + key)
+else:
+    def getDefaultValue(key):
+        return defaultSettings[key]
+
+    def setDefaultValue(key, value):
+        defaultSettings[key] = value
 
 settingsManager = PyREPLSettings()
 
@@ -471,7 +477,7 @@ class PyREPLTextView(NSTextView):
         self._stdoutColor = NSColor.blackColor()
         self._glyphWidth = 1
 
-        self._console = InteractiveConsole(locals=namespaceInjections)
+        self._console = None
         self._stderr = PseudoUTF8Output(self.writeStderr_)
         self._stdout = PseudoUTF8Output(self.writeStdout_)
         self._prompt = sys.ps1
@@ -626,14 +632,23 @@ class PyREPLTextView(NSTextView):
 
     # Execution
 
-    def runSource_(self, source):
-        save = (sys.stdout, sys.stderr)
-        sys.stdout = self._stdout
-        sys.stderr = self._stderr
-        try:
-            self._console.runsource(source)
-        finally:
-            sys.stdout, sys.stderr = save
+    def startSession_(self, startupCode):
+        namespace = dict(namespaceInjections)
+        if startupCode is not None:
+            try:
+                code = compile(startupCode, "", "exec", 0)
+            except:
+                traceback.print_exc(0)
+            else:
+                try:
+                    exec code in namespace
+                except:
+                    etype, value, tb = sys.exc_info()
+                    if tb.tb_next is not None:
+                        tb = tb.tb_next
+                    traceback.print_exception(etype, value, tb)
+                    etype = value = tb = None
+        self._console = InteractiveConsole(locals=namespace)
 
     def currentLine(self):
         line = self.rawText().splitlines()[-1]
@@ -790,9 +805,7 @@ class PyREPLTextEditor(vanilla.TextEditor):
         if banner:
             textView.writeStdout_(banner)
             textView.writeStdout_("\n")
-        if startupCode:
-            for line in startupCode.splitlines():
-                textView.runSource_(line)
+        textView.startSession_(startupCode)
         textView.writePrompt()
 
     def getCharacterBox(self):
