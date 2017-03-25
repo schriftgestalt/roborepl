@@ -45,6 +45,12 @@ except ImportError:
     inRoboFont = False
 
 try:
+    import GlyphsApp
+    inGlyphs = True
+except ImportError:
+    inGlyphs = False
+
+try:
     import jedi
     haveJedi = True
     variableChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
@@ -337,7 +343,7 @@ if inRoboFont:
     def setDefaultValue(key, value):
         mojo.extensions.setExtensionDefault(defaultStub + key, value)
 
-else:
+elif inGlyphs:
     NSUserDefaults.standardUserDefaults().registerDefaults_(d)
     def getDefaultValue(key):
         return NSUserDefaults.standardUserDefaults().objectForKey_(defaultStub + key)
@@ -848,7 +854,7 @@ if inRoboFont:
         "OpenFont" : mojo.roboFont.OpenFont,
         "NewFont" : mojo.roboFont.NewFont,
     })
-else:
+elif inGlyphs:
     from robofab.world import AllFonts, CurrentFont, CurrentGlyph, OpenFont, NewFont
     namespaceInjections.update({
         "AllFonts" : AllFonts,
